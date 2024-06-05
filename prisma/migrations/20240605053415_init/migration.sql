@@ -14,4 +14,4 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
-ALTER SEQUENCE "public"."TableName_id_seq" RESTART WITH 1;
+ALTER SEQUENCE "public"."TableName_id_seq" RESTART WITH 1;`
