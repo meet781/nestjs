@@ -1,5 +1,5 @@
 // src/user.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable ,NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { ResponseService } from 'src/helper/response.service';
 import { CreateUserDto } from './dto/create-user.dto/create-user.dto';
@@ -60,7 +60,31 @@ export class UserService {
       handlePrismaError(error)
     }
   }
+  async getAllUsers(): Promise<any[]> {
+    try {
+      return await this.prisma.users.findMany();
+    } catch (error) {
+      throw new NotFoundException('Failed to fetch users');
+    }
+  }
 
+  async getUserById(id: number) {
+    try {
+      const user = await this.prisma.users.findFirst({
+        where: {
+          id,
+        },
+      });
 
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user;
+    } catch (error) {
+      throw new NotFoundException('Failed to fetch user');
+    }
+  }
 }
+
+
 
