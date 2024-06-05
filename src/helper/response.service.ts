@@ -8,7 +8,7 @@ import { codes } from "./responsecode"
 
 export class ResponseService {
     // method for generate Success response
-    send(data: any, message: string, code: string = 'OK') {
+    send(data: any, code: string  , message?: string | null) {
         const [status, statusText] = this.getCode(code)
          
         return {
@@ -18,9 +18,6 @@ export class ResponseService {
             message
         }
     }
-   
-    //method  for generating Error Message
- 
 
     //method for getting code from responsecode
     getCode(code: string): [number, string] {

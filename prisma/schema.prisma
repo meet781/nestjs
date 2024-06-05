@@ -17,18 +17,9 @@ model users {
   id           Int     @id @default(autoincrement())
   username     String  @unique 
   email        String  @unique
+  password     String
   name         String   
-  post         posts[]
-  
 }  
 
-model posts {
-  id           Int     @id @default(autoincrement())
-  title        String  
-  content      String?
-  author       users  @relation(fields : [authorid] , references : [id])
-  authorid     Int
-  isDeleted    Boolean @default(false)
 
-}
 

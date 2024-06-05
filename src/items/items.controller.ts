@@ -8,22 +8,22 @@ export class ItemsController {
     constructor(private readonly responseService : ResponseService) {}
     @Get()
     findAll(): any {
-        return this.responseService.success(items, 'All items retrieved');
+        return this.responseService.send(items, 'OK' ,'All items retrieved');
     }
 
     @Get(':id')
     findOne(@Param('id') id: string) {
        const item = items.find(item => item.id === +id);
        if(!item) {
-        return this.responseService.error('No such item found' , "NOT_FOUND");
+        return this.responseService.send('No such item found' , "NOT_FOUND");
        }
-       return this.responseService.success(item, 'Item retrieved');
+       return this.responseService.send(item, 'OK' ,'Item retrieved');
     }
 
     @Post()
     create(@Body() item: Item): Item {
         items.push(item)
-        this.responseService.success(item, 'Item created');
+        this.responseService.send(item, 'OK' ,'Item created');
         return item
       }
 
@@ -33,9 +33,9 @@ export class ItemsController {
     const index = items.findIndex(item => item.id === +id);
     if (index !== -1) {
       items[index] = { ...items[index], ...updatedItem };
-      return this.responseService.success(items[index], 'Item updated');
+      return this.responseService.send(items[index], 'OK' ,'Item updated');
     } else {
-      return this.responseService.error('Item not found', 'NOT_FOUND');
+      return this.responseService.send('Item not found', 'NOT_FOUND');
     }
 }
 
