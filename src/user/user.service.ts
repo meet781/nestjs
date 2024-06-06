@@ -1,11 +1,11 @@
-// src/user.service.ts
-import { Injectable ,NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { ResponseService } from 'src/helper/response.service';
 import { CreateUserDto } from './dto/create-user.dto/create-user.dto';
 import { users } from '@prisma/client';
 import { hash } from 'bcrypt';
-import { handlePrismaError } from 'src/helper/errorHandler';
+import PrismaErrorHandler from 'src/helper/errorHandler';
+import { UpdateUsertDto } from './dto/user-update.dto';
 
 
 
@@ -16,32 +16,42 @@ export class UserService {
     private responseService: ResponseService,
   ) { }
 
-  async userExistsByEmail( email : string): Promise<boolean> {
-    const user = await this.prisma.users.findUnique({
-      where: {
-        email
-      },
-    });
-    return !!user;
+  async userExistsByEmail(email: string): Promise<users | null> {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: {
+          email,
+        },
+      });
+      return user;
+    } catch (error) {
+      PrismaErrorHandler.handle(error);
+    }
   }
 
-  async userExistsByUsername(username: string): Promise<boolean> {
-    const user = await this.prisma.users.findUnique({
-      where: {
-        username,
-      },
-    });
-    return !!user;
+  async userExistsByUsername(username: string): Promise<users | null> {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: {
+          username,
+        },
+      });
+      return user;
+    } catch (error) {
+      PrismaErrorHandler.handle(error);
+    }
   }
 
   async createUser(createUserDto: CreateUserDto): Promise<users> {
     try {
-      if (await this.userExistsByEmail(createUserDto.email)) {
-        this.responseService.send('Email already exists', 'BAD_REQUEST');
+      const userByEmail = await this.userExistsByEmail(createUserDto.email);
+      if (userByEmail) {
+        throw new BadRequestException('User already exists');
       }
 
-      if (await this.userExistsByUsername(createUserDto.username)) {
-        this.responseService.send('Username already exists', 'BAD_REQUEST');
+      const userByUsername = await this.userExistsByUsername(createUserDto.username);
+      if (userByUsername) {
+        throw new BadRequestException('User already exists');
       }
 
       const newUser = await this.prisma.users.create({
@@ -49,42 +59,59 @@ export class UserService {
           username: createUserDto.username,
           email: createUserDto.email,
           name: createUserDto.name,
-          password: await hash(createUserDto.password, 10)
-        }
+          password: await hash(createUserDto.password, 10),
+        },
       });
 
-      this.responseService.send(newUser, 'OK', 'new user created');
       return newUser;
     } catch (error) {
-      this.responseService.send(error.message, 'FAILURE');
-      handlePrismaError(error)
+      PrismaErrorHandler.handle(error);
     }
   }
+
   async getAllUsers(): Promise<any[]> {
     try {
       return await this.prisma.users.findMany();
     } catch (error) {
-      throw new NotFoundException('Failed to fetch users');
+      PrismaErrorHandler.handle(error);
     }
   }
 
-  async getUserById(id: number) {
+  async getUserById(id: number):Promise<users> {
     try {
-      const user = await this.prisma.users.findFirst({
+      const user = await this.prisma.users.findUnique({
         where: {
           id,
         },
       });
-
       if (!user) {
         throw new NotFoundException('User not found');
       }
       return user;
     } catch (error) {
-      throw new NotFoundException('Failed to fetch user');
+      PrismaErrorHandler.handle(error);
     }
   }
+  async updateUser(id: number, updateUserDto: UpdateUsertDto): Promise<users>{
+    try {
+      const userExist = await this.getUserById(id)
+
+      if (!userExist) {
+        throw new NotFoundException('User not found');
+      }
+      const updateUser = await this.prisma.users.update({
+        where: { id },
+        data: {
+          ...updateUserDto,
+          ...(updateUserDto.password && {
+            password: await hash(updateUserDto.password, 10),
+          })
+        }
+      })
+      return  updateUser
+     }catch(error) {
+      PrismaErrorHandler.handle(error)
+    }
+  } 
 }
-
-
 
